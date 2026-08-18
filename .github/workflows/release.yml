@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # so build-app.sh can read the tag via git describe
+
+      - name: Build (universal, ad-hoc signed)
+        run: CI=1 UNIVERSAL=1 sh Scripts/build-app.sh release
+
+      - name: Zip app bundle
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          cd build
+          zip -r "../Kat-${VERSION}.zip" "Kat.app"
+          cd ..
+          echo "ASSET=Kat-${VERSION}.zip" >> "$GITHUB_ENV"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.VERSION }}
+          files: ${{ env.ASSET }}
+          body: |
+            ## Install
+
+            1. Download `Kat-${{ env.VERSION }}.zip` below and unzip it.
+            2. Move `Kat.app` to your Applications folder.
+            3. **First launch only** — macOS blocks unsigned apps. Either:
+               - right-click the app → **Open** → **Open**, or
+               - run in Terminal:
+                 ```
+                 xattr -dr com.apple.quarantine "/Applications/Kat.app"
+                 ```
+            4. Kat lives in the menu bar (no Dock icon) — click the cat icon to configure
+               your break schedule, custom buttons, and scripts.
+
+            **Known limitation:** this build is ad-hoc signed (no paid Apple Developer
+            account behind it), so macOS won't grant it permission to show notifications —
+            the pre-break heads-up alert won't appear. Breaks, the overlay, custom buttons,
+            and scripts all work normally regardless.
+
+            _The KatSaver.saver screensaver isn't included in this release — build it from
+            source with `Scripts/build-saver.sh` if you want it._
