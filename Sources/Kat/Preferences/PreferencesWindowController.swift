@@ -7,8 +7,10 @@ import SwiftUI
 /// has been shown once.
 @MainActor
 final class PreferencesWindowController: NSWindowController {
-    convenience init(settingsStore: SettingsStore) {
-        let hostingController = NSHostingController(rootView: PreferencesView(settingsStore: settingsStore))
+    convenience init(settingsStore: SettingsStore, onCheckForUpdatesChanged: (() -> Void)? = nil) {
+        let hostingController = NSHostingController(
+            rootView: PreferencesView(settingsStore: settingsStore, onCheckForUpdatesChanged: onCheckForUpdatesChanged)
+        )
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Kat Preferences"
         window.styleMask = [.titled, .closable, .miniaturizable]

@@ -17,6 +17,7 @@ final class SettingsStore {
         static let onStartScripts = "onStartScripts"
         static let onEndScripts = "onEndScripts"
         static let hasShownWelcome = "hasShownWelcome"
+        static let checkForUpdates = "checkForUpdates"
     }
 
     @ObservationIgnored
@@ -56,6 +57,9 @@ final class SettingsStore {
     var hasShownWelcome: Bool {
         didSet { defaults.set(hasShownWelcome, forKey: Keys.hasShownWelcome) }
     }
+    var checkForUpdates: Bool {
+        didSet { defaults.set(checkForUpdates, forKey: Keys.checkForUpdates) }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -68,6 +72,7 @@ final class SettingsStore {
         onStartScripts = Self.load([LifecycleScript].self, key: Keys.onStartScripts, defaults: defaults) ?? []
         onEndScripts = Self.load([LifecycleScript].self, key: Keys.onEndScripts, defaults: defaults) ?? []
         hasShownWelcome = defaults.object(forKey: Keys.hasShownWelcome) as? Bool ?? false
+        checkForUpdates = defaults.object(forKey: Keys.checkForUpdates) as? Bool ?? true
     }
 
     private func persist(_ value: some Encodable, key: String) {

@@ -2,10 +2,11 @@ import SwiftUI
 
 struct PreferencesView: View {
     @Bindable var settingsStore: SettingsStore
+    var onCheckForUpdatesChanged: (() -> Void)?
 
     var body: some View {
         TabView {
-            GeneralSettingsView(settingsStore: settingsStore)
+            GeneralSettingsView(settingsStore: settingsStore, onCheckForUpdatesChanged: onCheckForUpdatesChanged)
                 .tabItem { Label("General", systemImage: "gearshape") }
             ScheduleSettingsView(settingsStore: settingsStore)
                 .tabItem { Label("Schedule", systemImage: "calendar") }

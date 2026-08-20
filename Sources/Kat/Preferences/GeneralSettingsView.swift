@@ -4,6 +4,7 @@ struct GeneralSettingsView: View {
     @Bindable var settingsStore: SettingsStore
     @State private var launchAtLoginEnabled = LoginItemManager.isEnabled
     @State private var debugWelcomeWindowController: WelcomeWindowController?
+    var onCheckForUpdatesChanged: (() -> Void)?
 
     var body: some View {
         Form {
@@ -32,6 +33,11 @@ struct GeneralSettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             TextField("Screensaver message after a break ends", text: $settingsStore.breakOverMessage)
+
+            Toggle("Check for Updates", isOn: $settingsStore.checkForUpdates)
+                .onChange(of: settingsStore.checkForUpdates) { _, _ in
+                    onCheckForUpdatesChanged?()
+                }
 
             Button("Show Welcome Screen (debug)") {
                 let controller = WelcomeWindowController(settingsStore: settingsStore)

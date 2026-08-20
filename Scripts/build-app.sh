@@ -21,6 +21,12 @@ VERSION="$(git -C "$ROOT_DIR" describe --tags --abbrev=0 2>/dev/null || true)"
 VERSION="${VERSION:-0.1.0}"
 VERSION="${VERSION#v}"
 
+# "owner/repo" derived from the git remote, for the in-app update check (Preferences ->
+# Check for Updates) to know where to look on GitHub. Left unset if there's no
+# GitHub-shaped remote, which silently disables the check.
+REMOTE="$(git -C "$ROOT_DIR" remote get-url origin 2>/dev/null || true)"
+GHREPO="$(printf '%s' "$REMOTE" | sed -E 's#^git@github.com:##; s#^https://github.com/##; s#\.git$##')"
+
 cd "$ROOT_DIR"
 
 if [ "${UNIVERSAL:-0}" = "1" ]; then
@@ -63,6 +69,10 @@ cp "$ROOT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_DIR/Contents/Info.plist"
+
+if printf '%s' "$GHREPO" | grep -qE '^[^/]+/[^/]+$'; then
+    /usr/libexec/PlistBuddy -c "Add :GHRepo string $GHREPO" "$APP_DIR/Contents/Info.plist"
+fi
 
 # Plain ad-hoc signing (-s -) is silently ineligible for UNUserNotificationCenter
 # authorization on modern macOS ("Notifications are not allowed for this application").

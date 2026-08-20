@@ -5,19 +5,24 @@ import AppKit
 final class StatusItemController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let scheduler: BreakScheduler
+    private let updateMonitor: UpdateAvailabilityMonitor?
 
     private let countdownItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let pauseResumeItem = NSMenuItem()
+    private let updateItem = NSMenuItem(title: "", action: #selector(openReleasesPage), keyEquivalent: "")
+    private let updateSeparator = NSMenuItem.separator()
 
     // See BreakScheduler's `timer` property for why this needs `nonisolated(unsafe)`.
     nonisolated(unsafe) private var refreshTimer: Timer?
 
     var onOpenPreferences: (() -> Void)?
 
-    init(scheduler: BreakScheduler) {
+    init(scheduler: BreakScheduler, updateMonitor: UpdateAvailabilityMonitor? = nil) {
         self.scheduler = scheduler
+        self.updateMonitor = updateMonitor
         super.init()
 
+        updateItem.target = self
         statusItem.button?.image = Self.menuBarIcon()
         statusItem.menu = buildMenu()
         refresh()
@@ -47,6 +52,9 @@ final class StatusItemController: NSObject {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
+
+        menu.addItem(updateItem)
+        menu.addItem(updateSeparator)
 
         menu.addItem(
             withTitle: "Start Break Now",
@@ -97,6 +105,20 @@ final class StatusItemController: NSObject {
     private func refresh() {
         countdownItem.title = countdownText()
         pauseResumeItem.title = scheduler.isPaused ? "Resume Breaks" : "Pause Breaks"
+
+        if let version = updateMonitor?.availableVersion {
+            updateItem.title = "Update available (\(version))…"
+            updateItem.isHidden = false
+            updateSeparator.isHidden = false
+        } else {
+            updateItem.isHidden = true
+            updateSeparator.isHidden = true
+        }
+    }
+
+    @objc private func openReleasesPage() {
+        guard let url = updateMonitor?.releasesURL else { return }
+        NSWorkspace.shared.open(url)
     }
 
     private func countdownText() -> String {

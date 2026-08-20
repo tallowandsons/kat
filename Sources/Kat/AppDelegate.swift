@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lockStateMonitor: LockStateMonitor?
     private var preferencesWindowController: PreferencesWindowController?
     private var welcomeWindowController: WelcomeWindowController?
+    private var updateMonitor: UpdateAvailabilityMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Belt-and-suspenders: Info.plist's LSUIElement handles this once bundled as
@@ -90,10 +91,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         publishStatus()
 
-        let preferencesWindowController = PreferencesWindowController(settingsStore: settingsStore)
+        let updateMonitor = UpdateAvailabilityMonitor()
+        self.updateMonitor = updateMonitor
+        updateMonitor.checkForUpdatesProvider = { [settingsStore] in settingsStore.checkForUpdates }
+        updateMonitor.start()
+
+        let preferencesWindowController = PreferencesWindowController(
+            settingsStore: settingsStore,
+            onCheckForUpdatesChanged: { [weak updateMonitor] in updateMonitor?.recheck() }
+        )
         self.preferencesWindowController = preferencesWindowController
 
-        let statusItemController = StatusItemController(scheduler: scheduler)
+        let statusItemController = StatusItemController(scheduler: scheduler, updateMonitor: updateMonitor)
         statusItemController.onOpenPreferences = { [weak preferencesWindowController] in
             preferencesWindowController?.show()
         }
