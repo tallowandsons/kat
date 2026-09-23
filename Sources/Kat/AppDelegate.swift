@@ -83,6 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let notificationManager = BreakNotificationManager()
         self.notificationManager = notificationManager
+        notificationManager.isCameraGateEnabled = { [settingsStore] in settingsStore.postponeOnCameraUse }
+        notificationManager.isCameraInUse = { [weak cameraMonitor] in cameraMonitor?.isCameraInUse ?? false }
         notificationManager.requestAuthorization()
         notificationManager.scheduleHeadsUp(for: scheduler.nextBreakDate)
         scheduler.onNextBreakDateChange = { [weak notificationManager] nextBreakDate in
